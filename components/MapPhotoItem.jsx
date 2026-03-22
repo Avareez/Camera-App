@@ -6,14 +6,12 @@ export default function MapPhotoItem({ photo, openPhoto }) {
         <TouchableOpacity style={styles.container} onPress={() => openPhoto(photo)}>
             <Image source={{ uri: photo.uri }} style={styles.image} />
             <Text style={styles.coordsText}>
-                Longitude/Longitude
+                Latitude/Longitude
             </Text>
             <Text style={styles.coords}>
-                {photo.latitude.toFixed(4)}
+                {photo.latitude.toFixed(4)}, {photo.longitude.toFixed(4)}
             </Text>
-            <Text style={styles.coords}>
-                {photo.longitude.toFixed(4)}
-            </Text>
+
         </TouchableOpacity>
     );
 }
@@ -30,9 +28,9 @@ const styles = StyleSheet.create({
         marginBottom: 4
     },
     coords: {
-        alignSelf: "left",
+        alignSelf: "center",
         color: '#eee',
-        fontSize: 12
+        fontSize: 12,
     },
     coordsText: {
         color: '#eee',
