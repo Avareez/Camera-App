@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Dimensions, FlatList, Button, ToastAndroid, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Dimensions, FlatList, Button, ToastAndroid, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import * as MediaLibrary from 'expo-media-library';
 import FotoItem from '../components/FotoItem';
 import MyButton from '../components/MyButton';
@@ -11,6 +11,7 @@ export default function GalleryScreen({ navigation }) {
     const [photos, setPhotos] = useState([]);
     const [numColumns, setNumColumns] = useState(3);
     const [selectedPhotos, setSelectedPhotos] = useState([]);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         (async () => {
@@ -34,19 +35,23 @@ export default function GalleryScreen({ navigation }) {
     }, [navigation]);
 
     const loadPhotos = async () => {
+        setLoading(true);
         try {
             const media = await MediaLibrary.getAssetsAsync({
                 first: 1000,
                 mediaType: ['photo'],
+                sortBy: [[MediaLibrary.SortBy.creationTime, false]]
             });
-            const sorted = media.assets.sort((a, b) => new Date(b.creationTime) - new Date(a.creationTime));
-            setPhotos(sorted);
+            // const sorted = media.assets.sort((a, b) => new Date(b.creationTime) - new Date(a.creationTime));
+            setPhotos(media.assets);
         } catch (error) {
             ToastAndroid.showWithGravity(
                 'Błąd pobierania zdjęć',
                 ToastAndroid.SHORT,
                 ToastAndroid.CENTER
             );
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -108,15 +113,15 @@ export default function GalleryScreen({ navigation }) {
 
     if (hasPermissions === null) {
         return (
-            <View style={styles.center}>
-                <Text>Sprawdzanie uprawnień...</Text>
+            <View style={styles.loadingOverlay}>
+                <Text style={styles.loadingText}>Sprawdzanie uprawnień...</Text>
             </View>
         );
     }
     if (!hasPermissions) {
         return (
-            <View style={styles.center}>
-                <Text>Brak uprawnień do galerii.</Text>
+            <View style={styles.loadingOverlay}>
+                <Text style={styles.loadingText}>Brak uprawnień do galerii.</Text>
             </View>
         );
     }
@@ -128,6 +133,12 @@ export default function GalleryScreen({ navigation }) {
                 <MyButton text="Unselect" color="#49BF7C" txtcolor="#080A0D" onPress={unselect} />
                 <MyButton text="Delete Selected" color="#49BF7C" txtcolor="#080A0D" onPress={deleteSelected} />
             </View>
+            {loading && (
+                <View style={styles.loadingOverlay}>
+                    <ActivityIndicator size="large" color="#49BF7C" />
+                    <Text style={styles.loadingText}>Ładowanie zdjęć...</Text>
+                </View>
+            )}
             <FlatList
                 data={photos}
                 renderItem={renderItem}
@@ -158,5 +169,18 @@ const styles = StyleSheet.create({
     },
     list: {
         paddingBottom: 20
+    },
+    loadingOverlay: {
+        position: 'absolute',
+        top: 0, left: 0, right: 0, bottom: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(8, 10, 13, 0.7)',
+        zIndex: 10,
+    },
+    loadingText: {
+        color: '#49BF7C',
+        marginTop: 10,
+        fontSize: 14,
     }
 });
