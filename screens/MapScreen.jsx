@@ -30,19 +30,23 @@ export default function MapScreen({ navigation }) {
         }
     };
 
+    const sendPhotosToMap = () => {
+        if (!webViewRef.current || photos.length === 0) return;
+        const grouped = {};
+        photos.forEach(p => {
+            const key = `${p.latitude.toFixed(4)},${p.longitude.toFixed(4)}`;
+            if (!grouped[key]) {
+                grouped[key] = { latitude: p.latitude, longitude: p.longitude, count: 0 };
+            }
+            grouped[key].count++;
+        });
+        webViewRef.current.postMessage(JSON.stringify(Object.values(grouped)));
+    };
+
+    const onWebViewLoad = () => sendPhotosToMap();
+
     useEffect(() => {
-        if (webViewRef.current && photos.length > 0) {
-            const grouped = {};
-            photos.forEach(p => {
-                const key = `${p.latitude.toFixed(4)},${p.longitude.toFixed(4)}`;
-                if (!grouped[key]) {
-                    grouped[key] = { latitude: p.latitude, longitude: p.longitude, count: 0 };
-                }
-                grouped[key].count++;
-            });
-            const points = Object.values(grouped);
-            webViewRef.current.postMessage(JSON.stringify(points));
-        }
+        sendPhotosToMap();
     }, [photos]);
 
     const openPhoto = (photo) => {
@@ -138,6 +142,7 @@ export default function MapScreen({ navigation }) {
                     ref={webViewRef}
                     source={{ html: mapHTML }}
                     style={styles.map}
+                    onLoad={onWebViewLoad}
                     onMessage={handleMessage}
                     javaScriptEnabled={true}
                     domStorageEnabled={true}
